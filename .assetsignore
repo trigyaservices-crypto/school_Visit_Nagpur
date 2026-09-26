@@ -1,0 +1,7 @@
+.git
+node_modules
+*.zip
+*.py
+*.pyc
+run.sh
+run.bat

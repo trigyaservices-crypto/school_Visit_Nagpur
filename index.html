@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NAGPUR SCHOOL VISIT - Professional School Discovery & Field Planning</title>
+  <meta name="description" content="Official responsive web application for discovering 3,915 schools across Nagpur District. Live GPS distance calculation, multi-factor filtering, route planning, visit tracking, and Google Maps navigation.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/icon-192.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#0B1F3A">
+
+  <!-- Modular Stylesheets -->
+  <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-section" onclick="window.NagpurSchoolVisit.switchTab('dashboard')">
+        <div class="brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">NAGPUR <span class="gold">SCHOOL VISIT</span></div>
+          <div class="brand-subtitle">Nagpur District School Discovery & Field Planning</div>
+        </div>
+      </div>
+
+      <!-- Desktop Navigation -->
+      <nav class="header-nav">
+        <button id="nav_dashboard" class="nav-link active" onclick="window.NagpurSchoolVisit.switchTab('dashboard')">
+          <span>Home</span>
+        </button>
+        <button id="nav_nearby" class="nav-link" onclick="window.NagpurSchoolVisit.switchTab('nearby')">
+          <span>Nearby Schools</span>
+        </button>
+        <button id="nav_schools" class="nav-link" onclick="window.NagpurSchoolVisit.switchTab('schools')">
+          <span>All Schools</span>
+        </button>
+        <button id="nav_route" class="nav-link" onclick="window.NagpurSchoolVisit.switchTab('route')">
+          <span>Route Planner</span>
+          <span id="navRouteBadge" class="nav-badge" style="display: none;">0</span>
+        </button>
+        <button id="nav_visitplan" class="nav-link" onclick="window.NagpurSchoolVisit.switchTab('visitplan')">
+          <span>Visit Plan</span>
+          <span id="navVisitBadge" class="nav-badge" style="display: none;">0</span>
+        </button>
+        <button id="nav_visithistory" class="nav-link" onclick="window.NagpurSchoolVisit.switchTab('visithistory')">
+          <span>Visit History</span>
+        </button>
+        <button id="nav_validation" class="nav-link" onclick="window.NagpurSchoolVisit.switchTab('validation')">
+          <span>Data Validation</span>
+        </button>
+      </nav>
+
+      <!-- Header Controls -->
+      <div class="header-right">
+        <button id="locationStatusPill" class="location-pill" onclick="window.NagpurSchoolVisit.openLocationModal()" title="View or change current coordinates">
+          <span class="status-dot"></span> Centered at Nagpur Zero Mile
+        </button>
+        <button class="btn-primary" onclick="window.NagpurSchoolVisit.detectGPS()" title="Acquire Live GPS Location">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          <span>My GPS</span>
+        </button>
+        <button id="themeToggleBtn" class="btn-theme-toggle" onclick="window.NagpurSchoolVisit.toggleTheme()" title="Toggle Theme">
+          <span id="themeToggleIcon">🌙</span>
+          <span id="themeToggleText">Dark</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dashboard Hero Section -->
+  <section class="dashboard-hero">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <h1>NAGPUR SCHOOL <span class="gold">VISIT</span></h1>
+        <h2>Schools Around <span class="gold">Your Location</span></h2>
+        <p>Official discovery, spatial planning, and field tracking system for 3,915 educational institutions across Nagpur District. Calculate live GPS Haversine distances, organize inspection itineraries, track completed visits, and navigate directly with Google Maps.</p>
+        <div class="hero-actions">
+          <button class="btn-hero-primary" onclick="window.NagpurSchoolVisit.detectGPS()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            <span>Detect My Location</span>
+          </button>
+          <button class="btn-hero-secondary" onclick="window.NagpurSchoolVisit.openLocationModal()">
+            <span>Change / Preset Coordinates</span>
+          </button>
+          <button class="btn-hero-secondary" onclick="window.NagpurSchoolVisit.switchTab('visitplan')">
+            <span>📅 My Visit Plan</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Field Coordinates Card -->
+      <div class="hero-location-card">
+        <div class="loc-card-header">
+          <div class="loc-card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span>Current Field Coordinates &bull; Nagpur District</span>
+          </div>
+          <span id="heroSource" style="font-size: 0.75rem; color: var(--slate-300);">Default</span>
+        </div>
+
+        <div class="loc-coords-grid">
+          <div class="coord-item">
+            <div class="coord-label">District</div>
+            <div id="heroDist" class="coord-value" style="color: #38bdf8; font-weight: 700;">NAGPUR</div>
+          </div>
+          <div class="coord-item">
+            <div class="coord-label">Latitude</div>
+            <div id="heroLat" class="coord-value">21.145800</div>
+          </div>
+          <div class="coord-item">
+            <div class="coord-label">Longitude</div>
+            <div id="heroLng" class="coord-value">79.088200</div>
+          </div>
+          <div class="coord-item">
+            <div class="coord-label">GPS Accuracy</div>
+            <div id="heroAcc" class="coord-value">±10 m</div>
+          </div>
+        </div>
+
+        <!-- 18 Nagpur Block Presets -->
+        <div class="loc-preset-row">
+          <span>Tehsil / Block Presets:</span>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.1458, 79.0882, 'Zero Mile Central', 'NAGPUR')">📍 Zero Mile (Central)</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.1500, 79.0800, 'URC 1 (Sitabuldi/Sadar)', 'NAGPUR')">📍 URC 1</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.1460, 79.1120, 'URC 2 (Gandhibagh/Mahal)', 'NAGPUR')">📍 URC 2</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.1250, 79.1100, 'URC 3 (Nehru Nagar)', 'NAGPUR')">📍 URC 3</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.1600, 79.1300, 'URC 4 (Lakadganj)', 'NAGPUR')">📍 URC 4</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.1750, 79.0850, 'URC 5 (Mangalwari)', 'NAGPUR')">📍 URC 5</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.3967, 79.3270, 'Ramtek Tehsil', 'NAGPUR')">📍 Ramtek</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.3856, 78.9181, 'Saoner Tehsil', 'NAGPUR')">📍 Saoner</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.2737, 78.5855, 'Katol Tehsil', 'NAGPUR')">📍 Katol</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.2227, 79.1977, 'Kamptee Tehsil', 'NAGPUR')">📍 Kamptee</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.0594, 78.9669, 'Hingna Tehsil', 'NAGPUR')">📍 Hingna</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(20.8542, 79.3278, 'Umred Tehsil', 'NAGPUR')">📍 Umred</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.2858, 79.3983, 'Mouda Tehsil', 'NAGPUR')">📍 Mouda</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(20.7649, 79.5147, 'Bhiwapur Tehsil', 'NAGPUR')">📍 Bhiwapur</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.4883, 78.5317, 'Narkhed Tehsil', 'NAGPUR')">📍 Narkhed</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.3789, 79.2081, 'Parseoni Tehsil', 'NAGPUR')">📍 Parseoni</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(21.2319, 78.9136, 'Kalmeshwar Tehsil', 'NAGPUR')">📍 Kalmeshwar</button>
+          <button class="loc-preset-btn" onclick="window.NagpurSchoolVisit.setCustomLocation(20.9856, 79.3622, 'Kuhi Tehsil', 'NAGPUR')">📍 Kuhi</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Application Body -->
+  <main class="main-wrapper">
+
+    <!-- Core KPI Summary Cards (5 Key Metrics) -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-info">
+          <h3>Total Schools</h3>
+          <div id="kpiTotalSchools" class="metric-value">3,915</div>
+          <div class="metric-sub">Nagpur District Master</div>
+        </div>
+        <div class="metric-icon-box metric-icon-blue">🏫</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-info">
+          <h3>Total Blocks</h3>
+          <div id="kpiBlocks" class="metric-value">18</div>
+          <div class="metric-sub">13 Rural + 5 Urban URCs</div>
+        </div>
+        <div class="metric-icon-box metric-icon-gold">🏛️</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-info">
+          <h3>Total Clusters</h3>
+          <div id="kpiClusters" class="metric-value">184</div>
+          <div class="metric-sub">CRC Education Clusters</div>
+        </div>
+        <div class="metric-icon-box metric-icon-amber">📍</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-info">
+          <h3>Visited Schools</h3>
+          <div id="kpiVisited" class="metric-value">0</div>
+          <div id="kpiVisitedPct" class="metric-sub text-emerald">0% completed</div>
+        </div>
+        <div class="metric-icon-box metric-icon-emerald">✓</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-info">
+          <h3>Pending Schools</h3>
+          <div id="kpiPending" class="metric-value">3,915</div>
+          <div id="kpiPendingSub" class="metric-sub text-amber">100% pending visit</div>
+        </div>
+        <div class="metric-icon-box metric-icon-indigo">⏳</div>
+      </div>
+    </section>
+
+    <!-- Schools Around Your Location by Proximity Radius (Interactive Cards) -->
+    <section class="proximity-grid">
+      <div class="proximity-card" id="cardRadius5" onclick="window.NagpurSchoolVisit.setRadiusFilter(5)" title="Filter schools within 5 KM">
+        <div class="proximity-info">
+          <div class="proximity-label">Schools Within 5 KM</div>
+          <div id="kpiRadius5" class="proximity-value">0</div>
+          <div class="proximity-sub">Immediate vicinity &bull; Click to filter</div>
+        </div>
+        <div class="proximity-icon-box metric-icon-gold">📍</div>
+      </div>
+
+      <div class="proximity-card" id="cardRadius10" onclick="window.NagpurSchoolVisit.setRadiusFilter(10)" title="Filter schools within 10 KM">
+        <div class="proximity-info">
+          <div class="proximity-label">Schools Within 10 KM</div>
+          <div id="kpiRadius10" class="proximity-value">0</div>
+          <div class="proximity-sub">Short driving radius &bull; Click to filter</div>
+        </div>
+        <div class="proximity-icon-box metric-icon-blue">🚗</div>
+      </div>
+
+      <div class="proximity-card" id="cardRadius25" onclick="window.NagpurSchoolVisit.setRadiusFilter(25)" title="Filter schools within 25 KM">
+        <div class="proximity-info">
+          <div class="proximity-label">Schools Within 25 KM</div>
+          <div id="kpiRadius25" class="proximity-value">0</div>
+          <div class="proximity-sub">Block boundary range &bull; Click to filter</div>
+        </div>
+        <div class="proximity-icon-box metric-icon-indigo">🧭</div>
+      </div>
+
+      <div class="proximity-card" id="cardRadius50" onclick="window.NagpurSchoolVisit.setRadiusFilter(50)" title="Filter schools within 50 KM">
+        <div class="proximity-info">
+          <div class="proximity-label">Schools Within 50 KM</div>
+          <div id="kpiRadius50" class="proximity-value">0</div>
+          <div class="proximity-sub">Sub-division zone &bull; Click to filter</div>
+        </div>
+        <div class="proximity-icon-box metric-icon-emerald">🌐</div>
+      </div>
+    </section>
+
+    <!-- Distance Radius Filter Bar -->
+    <section class="range-stats-bar">
+      <div class="range-stats-label">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        <span>Distance Radius Filter (Haversine):</span>
+      </div>
+
+      <div class="range-pills-group">
+        <button class="range-pill-btn" data-radius="5" onclick="window.NagpurSchoolVisit.setRadiusFilter(5)">
+          5 KM <span id="pillCount5" class="range-count">0</span>
+        </button>
+        <button class="range-pill-btn" data-radius="10" onclick="window.NagpurSchoolVisit.setRadiusFilter(10)">
+          10 KM <span id="pillCount10" class="range-count">0</span>
+        </button>
+        <button class="range-pill-btn" data-radius="15" onclick="window.NagpurSchoolVisit.setRadiusFilter(15)">
+          15 KM <span id="pillCount15" class="range-count">0</span>
+        </button>
+        <button class="range-pill-btn" data-radius="20" onclick="window.NagpurSchoolVisit.setRadiusFilter(20)">
+          20 KM <span id="pillCount20" class="range-count">0</span>
+        </button>
+        <button class="range-pill-btn" data-radius="25" onclick="window.NagpurSchoolVisit.setRadiusFilter(25)">
+          25 KM <span id="pillCount25" class="range-count">0</span>
+        </button>
+        <button class="range-pill-btn" data-radius="50" onclick="window.NagpurSchoolVisit.setRadiusFilter(50)">
+          50 KM <span id="pillCount50" class="range-count">0</span>
+        </button>
+        <button class="range-pill-btn" data-radius="100" onclick="window.NagpurSchoolVisit.setRadiusFilter(100)">
+          100 KM <span id="pillCount100" class="range-count">0</span>
+        </button>
+        <button class="range-pill-btn active" data-radius="all" onclick="window.NagpurSchoolVisit.setRadiusFilter('all')">
+          All Distances <span id="pillCountAll" class="range-count">0</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Global Search & Combined Multi-Factor Filters -->
+    <section class="search-filter-panel">
+      <div class="search-primary-row">
+        <div class="search-box-wrapper">
+          <span class="search-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <input type="text" id="globalSearchInput" class="search-input" placeholder="Search school name, UDISE code, village, cluster, block, Gram Panchayat, PIN code...">
+        </div>
+        <button class="btn-clear-filters" onclick="window.FilterModule.clearFilters()">Clear Filters</button>
+      </div>
+
+      <div class="filters-dropdowns-grid">
+        <div class="filter-group">
+          <label>District</label>
+          <select id="filterDistrict" class="filter-select">
+            <option value="NAGPUR" selected>NAGPUR (All 18 Blocks / 3,915 Schools)</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Block / Taluka</label>
+          <select id="filterBlock" class="filter-select" onchange="window.FilterModule.onFilterChange('filterBlock')">
+            <option value="">All Blocks</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>CRC Cluster</label>
+          <select id="filterCluster" class="filter-select" onchange="window.FilterModule.onFilterChange('filterCluster')">
+            <option value="">All Clusters</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>School Management</label>
+          <select id="filterManagement" class="filter-select" onchange="window.FilterModule.onFilterChange('filterManagement')">
+            <option value="">All Managements</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>School Category</label>
+          <select id="filterCategory" class="filter-select" onchange="window.FilterModule.onFilterChange('filterCategory')">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>School Type</label>
+          <select id="filterType" class="filter-select" onchange="window.FilterModule.onFilterChange('filterType')">
+            <option value="">All Types</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Visit Status</label>
+          <select id="filterStatus" class="filter-select" onchange="window.FilterModule.onFilterChange('filterStatus')">
+            <option value="">All Statuses</option>
+            <option value="visited">Visited Only</option>
+            <option value="pending">Pending Only</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Rural / Urban</label>
+          <select id="filterRuralUrban" class="filter-select" onchange="window.FilterModule.onFilterChange('filterRuralUrban')">
+            <option value="">All Regions</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB PANE 1: HOME / DASHBOARD & NEARBY SCHOOLS                             -->
+    <!-- ========================================================================= -->
+    <section id="tab_dashboard" class="tab-view-pane">
+      <div class="section-header-row">
+        <div>
+          <h2 class="section-title">
+            <span>📍 Schools Around Your Location</span>
+            <span id="nearMeResultsBadge" class="results-count-badge">0 schools</span>
+          </h2>
+          <p class="section-subtitle">Real-time GPS Haversine distance calculation &bull; Strictly sorted nearest to farthest</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn-primary" onclick="window.NagpurSchoolVisit.detectGPS()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            Refresh GPS Distance
+          </button>
+        </div>
+      </div>
+
+      <div id="dashboardSchoolsGrid" class="schools-grid">
+        <!-- School Cards Injected Dynamically -->
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB PANE 2: DEDICATED NEARBY SCHOOLS                                      -->
+    <!-- ========================================================================= -->
+    <section id="tab_nearby" class="tab-view-pane" style="display: none;">
+      <div class="section-header-row">
+        <div>
+          <h2 class="section-title">
+            <span>🎯 Schools Around Your Location (Expanded Proximity)</span>
+          </h2>
+          <p class="section-subtitle">Explore educational institutions in Nagpur sorted by proximity</p>
+        </div>
+        <button class="btn-primary" onclick="window.NagpurSchoolVisit.detectGPS()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          Acquire Current GPS
+        </button>
+      </div>
+
+      <div id="nearbySchoolsGrid" class="schools-grid">
+        <!-- Injected Dynamically -->
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB PANE 3: ALL SCHOOLS REGISTRY                                          -->
+    <!-- ========================================================================= -->
+    <section id="tab_schools" class="tab-view-pane" style="display: none;">
+      <div class="section-header-row">
+        <div>
+          <h2 class="section-title">
+            <span>🏫 All Schools Registry</span>
+            <span id="allSchoolsCountBadge" class="results-count-badge">3,915 schools</span>
+          </h2>
+          <p class="section-subtitle">Complete registry of all 3,915 government and private aided institutions across Nagpur District</p>
+        </div>
+      </div>
+
+      <div class="data-table-card">
+        <table class="data-table" id="allSchoolsTable">
+          <thead>
+            <tr>
+              <th>Sr No.</th>
+              <th>School Name</th>
+              <th>UDISE Code</th>
+              <th>Block</th>
+              <th>Cluster</th>
+              <th>Village</th>
+              <th>Gram Panchayat</th>
+              <th>Contact</th>
+              <th>Distance</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="allSchoolsTableBody">
+            <!-- Injected Dynamically -->
+          </tbody>
+        </table>
+
+        <!-- Pagination Controls -->
+        <div id="allSchoolsPagination" class="pagination-controls-row"></div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB PANE 4: ROUTE PLANNER                                                 -->
+    <!-- ========================================================================= -->
+    <section id="tab_route" class="tab-view-pane" style="display: none;">
+      <div class="section-header-row">
+        <div>
+          <h2 class="section-title">
+            <span>🗺️ Multi-Stop Route Planner</span>
+          </h2>
+          <p class="section-subtitle">Plan efficient sequential inspection routes and launch turn-by-turn Google Maps navigation</p>
+        </div>
+        <button class="btn-page" style="color: var(--rose-600);" onclick="window.RouteModule.clearAll()">Clear All Stops</button>
+      </div>
+
+      <div class="route-planner-container">
+        <!-- Left: Stops List -->
+        <div class="route-stops-card">
+          <div style="font-weight: 800; font-size: 1.05rem; color: var(--navy-900);">Inspection Itinerary Stops</div>
+          <div id="routeStopsList" class="route-stops-list">
+            <!-- Injected Dynamically -->
+          </div>
+        </div>
+
+        <!-- Right: Summary Card -->
+        <div class="route-summary-card">
+          <div style="font-weight: 800; font-size: 1.05rem; color: var(--navy-900); margin-bottom: 0.5rem;">Trip Overview</div>
+          <div id="routeSummaryDetails" class="route-summary-details">
+            <!-- Injected Dynamically -->
+          </div>
+          <a id="btnOpenRouteGmaps" href="#" target="_blank" rel="noopener noreferrer" class="btn-gmaps-external" style="display: none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            <span>OPEN IN GOOGLE MAPS</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB PANE 5: VISIT PLAN                                                    -->
+    <!-- ========================================================================= -->
+    <section id="tab_visitplan" class="tab-view-pane" style="display: none;">
+      <div class="section-header-row">
+        <div>
+          <h2 class="section-title">
+            <span>📋 Inspection Visit Itinerary</span>
+          </h2>
+          <p class="section-subtitle">Organize target schools into daily and upcoming inspection schedules</p>
+        </div>
+      </div>
+
+      <div class="plan-tabs-row">
+        <button class="plan-tab-btn active" data-plantab="today" onclick="window.VisitPlanModule.setSubTab('today')">
+          <span>Today's Target</span>
+          <span id="planCountToday" class="range-count">0</span>
+        </button>
+        <button class="plan-tab-btn" data-plantab="upcoming" onclick="window.VisitPlanModule.setSubTab('upcoming')">
+          <span>Upcoming Visits</span>
+          <span id="planCountUpcoming" class="range-count">0</span>
+        </button>
+        <button class="plan-tab-btn" data-plantab="visited" onclick="window.VisitPlanModule.setSubTab('visited')">
+          <span>Completed Visits</span>
+          <span id="planCountVisited" class="range-count">0</span>
+        </button>
+        <button class="plan-tab-btn" data-plantab="pending" onclick="window.VisitPlanModule.setSubTab('pending')">
+          <span>Pending Inspection</span>
+          <span id="planCountPending" class="range-count">0</span>
+        </button>
+      </div>
+
+      <div id="visitPlanGrid" class="schools-grid">
+        <!-- Injected Dynamically -->
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB PANE 6: VISIT HISTORY                                                 -->
+    <!-- ========================================================================= -->
+    <section id="tab_visithistory" class="tab-view-pane" style="display: none;">
+      <div class="section-header-row">
+        <div>
+          <h2 class="section-title">
+            <span>📜 Field Inspection Visit History Log</span>
+          </h2>
+          <p class="section-subtitle">Audit trail of completed school visits with timestamps, GPS verification, and observation notes</p>
+        </div>
+        <button class="btn-primary" onclick="window.VisitHistoryModule.exportCSV()">
+          <span>Export Visited Schools (CSV)</span>
+        </button>
+      </div>
+
+      <div class="data-table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Sr No.</th>
+              <th>School Name</th>
+              <th>UDISE Code</th>
+              <th>Block / Cluster</th>
+              <th>Visit Date & Time</th>
+              <th>GPS Location Verification</th>
+              <th>Inspection Status</th>
+            </tr>
+          </thead>
+          <tbody id="visitHistoryTableBody">
+            <!-- Injected Dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB PANE 7: DATA VALIDATION & SYSTEM INTEGRITY                            -->
+    <!-- ========================================================================= -->
+    <section id="tab_validation" class="tab-view-pane" style="display: none;">
+      <div class="section-header-row">
+        <div>
+          <h2 class="section-title">
+            <span>✅ Official Data Validation & System Integrity Suite</span>
+          </h2>
+          <p class="section-subtitle">Real-time audit verification comparing authoritative source records with web application records</p>
+        </div>
+      </div>
+
+      <div class="validation-summary-grid">
+        <div class="val-card val-pass">
+          <div class="val-card-title">Source Master Records</div>
+          <div class="val-card-val" id="valSourceCount">3,915</div>
+          <div class="val-card-status" style="color: var(--emerald-600);">✓ Authoritative Source Data</div>
+        </div>
+
+        <div class="val-card val-pass">
+          <div class="val-card-title">Web Application Records</div>
+          <div class="val-card-val" id="valWebCount">3,915</div>
+          <div class="val-card-status" style="color: var(--emerald-600);">✓ 100% Zero Data Loss Match</div>
+        </div>
+
+        <div class="val-card val-pass">
+          <div class="val-card-title">UDISE Code Integrity</div>
+          <div class="val-card-val" id="valUdiseCount">3,757 Unique</div>
+          <div class="val-card-status" style="color: var(--emerald-600);">✓ All 3,915 Schools Audited</div>
+        </div>
+
+        <div class="val-card val-pass">
+          <div class="val-card-title">GPS Coordinate Coverage</div>
+          <div class="val-card-val" id="valCoordsCount">100% Valid</div>
+          <div class="val-card-status" style="color: var(--emerald-600);">✓ 0 Missing / 0 Out of Bounds</div>
+        </div>
+      </div>
+
+      <div class="audit-table-card">
+        <div style="font-weight: 800; font-size: 1.05rem; color: var(--navy-900); margin-bottom: 0.85rem;">
+          Block-Wise Data Integrity & Verification Audit
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Block / Taluka</th>
+              <th>Total Schools</th>
+              <th>Cluster Coverage</th>
+              <th>Coordinates Verified</th>
+              <th>Headmaster Contacts</th>
+              <th>Audit Status</th>
+            </tr>
+          </thead>
+          <tbody id="validationBlockTableBody">
+            <!-- Injected Dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODALS                                                                    -->
+  <!-- ========================================================================= -->
+
+  <!-- School Details Modal -->
+  <div id="schoolDetailsModal" class="modal-overlay" onclick="if(event.target === this) window.DetailsModule.close()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="modalSchoolName" style="font-size: 1.25rem; font-weight: 800; color: var(--navy-900);">School Details</h3>
+          <div id="modalSchoolUdise" style="font-size: 0.8rem; color: var(--slate-500); margin-top: 0.2rem;">UDISE: -</div>
+        </div>
+        <button class="btn-page" onclick="window.DetailsModule.close()">&times;</button>
+      </div>
+      <div id="modalSchoolBody" class="modal-body">
+        <!-- Injected Dynamically -->
+      </div>
+      <div class="modal-footer">
+        <a id="modalBtnGmaps" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary" style="text-decoration: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          Start Route (Google Maps)
+        </a>
+        <button id="modalBtnVisited" class="btn-page" onclick="if(window.AppState.selectedSchoolForModal) window.VisitHistoryModule.openMarkVisitedModal(window.AppState.selectedSchoolForModal.id)">
+          Mark as Visited
+        </button>
+        <button id="modalBtnRoute" class="btn-page" onclick="if(window.AppState.selectedSchoolForModal) window.RouteModule.toggle(window.AppState.selectedSchoolForModal.id)">
+          + Add to Route
+        </button>
+        <button class="btn-page" onclick="window.DetailsModule.close()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Location Modal -->
+  <div id="locationModal" class="modal-overlay" onclick="if(event.target === this) window.NagpurSchoolVisit.closeModal('locationModal')">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--navy-900);">Set Field Coordinates</h3>
+        <button class="btn-page" onclick="window.NagpurSchoolVisit.closeModal('locationModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--slate-600);">Acquire real-time GPS coordinates using your device hardware or choose from official administrative presets:</p>
+        
+        <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="window.NagpurSchoolVisit.detectGPS(); window.NagpurSchoolVisit.closeModal('locationModal');">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          Acquire High-Accuracy Device GPS
+        </button>
+
+        <div style="border-top: 1px solid var(--slate-200); padding-top: 1rem; margin-top: 0.5rem;">
+          <div style="font-weight: 700; font-size: 0.82rem; color: var(--navy-900); margin-bottom: 0.5rem;">Manual Coordinates</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <div>
+              <label style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600);">Latitude</label>
+              <input type="number" step="0.000001" id="customInputLat" class="search-input" style="padding: 0.45rem;" placeholder="e.g. 21.1458">
+            </div>
+            <div>
+              <label style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600);">Longitude</label>
+              <input type="number" step="0.000001" id="customInputLng" class="search-input" style="padding: 0.45rem;" placeholder="e.g. 79.0882">
+            </div>
+          </div>
+          <button class="btn-page" style="width: 100%; margin-top: 0.65rem;" onclick="
+            const lat = parseFloat(document.getElementById('customInputLat').value);
+            const lng = parseFloat(document.getElementById('customInputLng').value);
+            if (!isNaN(lat) && !isNaN(lng)) {
+              window.NagpurSchoolVisit.setCustomLocation(lat, lng, 'Manual Coordinates', 'NAGPUR');
+            } else {
+              alert('Please enter valid numeric latitude and longitude');
+            }
+          ">
+            Apply Coordinates
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mark As Visited Modal -->
+  <div id="markVisitedModal" class="modal-overlay" onclick="if(event.target === this) window.VisitHistoryModule.closeModal()">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div>
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--navy-900);">Record School Visit</h3>
+          <div id="markVisitedSchoolName" style="font-size: 0.8rem; color: var(--slate-500); margin-top: 0.2rem;">-</div>
+        </div>
+        <button class="btn-page" onclick="window.VisitHistoryModule.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div>
+            <label style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600);">Visit Date</label>
+            <input type="date" id="visitDateInput" class="search-input" style="padding: 0.45rem;">
+          </div>
+          <div>
+            <label style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600);">Visit Time</label>
+            <input type="time" id="visitTimeInput" class="search-input" style="padding: 0.45rem;">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600);">GPS Verification</label>
+          <input type="text" id="visitGpsInput" class="search-input" readonly style="padding: 0.45rem; background-color: var(--slate-100);">
+        </div>
+
+        <div>
+          <label style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600);">Inspection Remarks & Observation</label>
+          <textarea id="visitRemarksInput" class="notes-textarea" placeholder="Enter findings on teacher attendance, midday meal quality, sanitation, digital infrastructure..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-page" onclick="window.VisitHistoryModule.closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="window.VisitHistoryModule.commitVisit()">Confirm Visit Completed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="brand-title">NAGPUR <span class="gold">SCHOOL VISIT</span></div>
+        <p>Official School Discovery, Spatial GIS & Field Inspection Management System &bull; Nagpur District, Maharashtra</p>
+      </div>
+      <div class="footer-meta">
+        <span><strong>3,915</strong> Verified Educational Institutions &bull; <strong>18</strong> Blocks & Talukas &bull; <strong>184</strong> Clusters</span>
+        <span class="footer-copy">&copy; 2026 NAGPUR SCHOOL VISIT. All official records preserved & secured.</span>
+      </div>
+    </div>
+  </footer>
+
+    <!-- Mobile Bottom Navigation Bar (HOME | NEARBY | VISITS) -->
+  <div class="mobile-bottom-nav">
+    <div class="mobile-nav-inner">
+      <button id="mob_dashboard" class="mobile-nav-btn active" onclick="window.NagpurSchoolVisit.switchTab('dashboard')">
+        <span class="mobile-nav-icon">🏠</span>
+        <span>HOME</span>
+      </button>
+      <button id="mob_nearby" class="mobile-nav-btn" onclick="window.NagpurSchoolVisit.switchTab('nearby')">
+        <span class="mobile-nav-icon">📍</span>
+        <span>NEARBY</span>
+      </button>
+      <button id="mob_visits" class="mobile-nav-btn" onclick="window.NagpurSchoolVisit.switchTab('visitplan')">
+        <span class="mobile-nav-icon">📋</span>
+        <span>VISITS</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 3000;"></div>
+
+  <!-- Authoritative School Data Script -->
+  
+  <!-- Scripts -->
+  <script src="static/schools_data.js"></script>
+  <script src="static/app.js"></script>
+</body>
+</html>

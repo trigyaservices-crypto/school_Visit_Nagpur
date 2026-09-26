@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nagpur-school-visit",
+  "compatibility_date": "2024-09-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
